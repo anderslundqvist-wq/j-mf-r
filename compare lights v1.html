@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jämför extraljus - Valostore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --yellow:#FFCE00; --gold:#AD8B00; --char:#202020;
+  --bg:#F2F2F2; --surface:#FFFFFF; --ink:#202020; --muted:#676767; --line:#E1E1E1;
+  --accent-ink:#8A6F00; --chip:#F2F2F2; --hover:#FAF6E6;
+  --night:#1A1A1A; --night-2:#242424; --night-ink:#EDEDED; --night-muted:#9A9A9A;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#161616; --surface:#202020; --ink:#F2F2F2; --muted:#A6A6A6; --line:#333333;
+    --accent-ink:#FFCE00; --chip:#2A2A2A; --hover:#2B2818;
+    --night:#121212; --night-2:#1C1C1C;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161616; --surface:#202020; --ink:#F2F2F2; --muted:#A6A6A6; --line:#333333;
+  --accent-ink:#FFCE00; --chip:#2A2A2A; --hover:#2B2818;
+  --night:#121212; --night-2:#1C1C1C;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+
+.topbar{background:var(--char);color:#fff}
+.topbar .in{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo{display:block;height:26px;width:auto}
+@media (max-width:640px){.logo{height:22px}}
+.topbar small{color:#BDBDBD;font-size:13px}
+
+.wrap{max-width:1240px;margin:0 auto;padding:28px 20px 56px}
+.intro{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-size:clamp(28px,4vw,42px);line-height:1.05;letter-spacing:-.025em;font-weight:800;margin:0 0 8px}
+.intro p{margin:0;color:var(--muted);max-width:60ch}
+
+.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+.layout>section{min-width:0}
+
+/* Picker */
+.picker{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden;position:sticky;top:16px}
+@media (max-width:900px){.picker{position:static}}
+.picker-head{padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+.picker-head h2{font-size:17px;margin:0 0 10px;font-weight:800}
+.search{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:4px;background:var(--bg);outline:none}
+.search:focus{border-color:var(--gold)}
+.fams{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.fam{border:1px solid var(--line);background:transparent;border-radius:4px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--muted)}
+.fam[aria-pressed="true"]{background:var(--char);border-color:var(--char);color:#fff}
+:root[data-theme="dark"] .fam[aria-pressed="true"]{background:var(--yellow);border-color:var(--yellow);color:#202020}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fam[aria-pressed="true"]{background:var(--yellow);border-color:var(--yellow);color:#202020}}
+.list{max-height:560px;overflow:auto;overscroll-behavior:contain}
+@media (max-width:900px){.list{max-height:300px}}
+.group-title{position:sticky;top:0;background:var(--surface);font-size:12.5px;color:var(--muted);padding:10px 16px 6px;border-bottom:1px solid var(--line);font-weight:600;z-index:1}
+.item{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;width:100%;text-align:left;padding:10px 16px;border:0;border-bottom:1px solid var(--line);background:transparent;cursor:pointer}
+.item:hover{background:var(--hover)}
+.item[disabled]{cursor:not-allowed;opacity:.45}
+.item .nm{font-weight:600;font-size:14px;line-height:1.3}
+.item .sp{font-size:12px;font-style:italic;color:var(--muted);line-height:1.35;margin-top:2px}
+.item .rng{font-variant-numeric:tabular-nums;font-size:13px;font-weight:600;white-space:nowrap;text-align:right}
+.item .rng small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.item.on{background:var(--hover)}
+.item.on .nm::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:7px;vertical-align:1px;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.empty{padding:22px 16px;color:var(--muted);font-size:14px}
+
+/* Stage */
+.stage{background:var(--night);color:var(--night-ink);border-radius:6px;overflow:hidden}
+.stage-head{padding:16px 18px 10px;min-width:0;display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:8px;min-height:34px;align-items:center}
+.chip{display:flex;align-items:center;gap:8px;background:var(--night-2);border:1px solid #333;border-radius:999px;padding:5px 6px 5px 12px;font-size:13.5px;font-weight:600;max-width:100%}
+.chip i{width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c);flex:none}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip button{border:0;background:transparent;color:var(--night-muted);width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1;flex:none}
+.chip button:hover{background:#3a3a3a;color:#fff}
+.chips .hint{color:var(--night-muted);font-size:14px}
+.lux{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lux label{font-size:13px;color:var(--night-muted)}
+.seg{display:inline-flex;max-width:100%;background:var(--night-2);border:1px solid #333;border-radius:4px;padding:3px}
+.seg button{border:0;flex:1;background:transparent;color:var(--night-ink);padding:6px 11px;border-radius:3px;cursor:pointer;font-size:13.5px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--yellow);color:#202020}
+.luxnote{padding:0 18px 4px;color:var(--night-muted);font-size:13.5px;min-height:24px}
+.luxnote b{color:var(--night-ink);font-weight:600}
+.canvas-box{position:relative;padding:4px 10px 0}
+canvas{display:block;width:100%;height:440px;cursor:crosshair;touch-action:none}
+@media (max-width:640px){canvas{height:320px}}
+.readout{border-top:1px solid #2e2e2e;padding:12px 18px 14px;font-size:13.5px;color:var(--night-muted);display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;min-height:50px}
+.readout .pos{color:var(--night-ink);font-weight:600;font-variant-numeric:tabular-nums}
+.readout .v{display:inline-flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums;color:var(--night-ink)}
+.readout .v i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.opts{display:flex;align-items:center;gap:8px;color:var(--night-muted);font-size:13px;cursor:pointer;user-select:none}
+.opts input{accent-color:var(--yellow);width:15px;height:15px}
+
+/* Results */
+.results{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.results-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.results-head h2{margin:0;font-size:20px;font-weight:800}
+.results-head p{margin:0;color:var(--muted);font-size:12px;font-style:italic}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:720px;font-variant-numeric:tabular-nums}
+th,td{padding:12px 14px;text-align:right;border-bottom:1px solid var(--line);font-size:14px;white-space:nowrap}
+th{font-size:12.5px;color:var(--muted);font-weight:600}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+tr:last-child td{border-bottom:0}
+td.lamp{min-width:240px}
+td.lamp .nm{font-weight:700;display:flex;align-items:center;gap:8px}
+td.lamp .nm i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+td.lamp .sp{color:var(--muted);font-size:12px;font-style:italic;margin-left:18px}
+td.main{font-weight:700;font-size:15px}
+.bar{display:block;height:4px;border-radius:2px;background:var(--line);margin-top:6px;overflow:hidden;min-width:90px}
+.bar b{display:block;height:100%;background:var(--gold)}
+.best{display:inline-block;margin-left:6px;font-size:11.5px;font-weight:700;color:#202020;background:var(--yellow);border-radius:4px;padding:1px 6px;vertical-align:1px}
+td.sel{background:var(--hover)}
+a.go{display:inline-block;background:var(--gold);color:#fff;font-weight:500;text-decoration:none;font-size:13px;padding:7px 12px}
+a.go:hover{background:#957700}
+.foot{margin-top:18px;color:var(--muted);font-size:12px;font-style:italic;max-width:80ch}
+.foot p{margin:0 0 6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="in">
+  <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="176.79 31.08 240.98 30.62" role="img" aria-label="Valostore"><path fill="#FFCE00" d="M 310.175781 40.140625 L 310.175781 39.058594 C 310.175781 36.441406 309.632812 34.636719 308.460938 33.332031 C 306.972656 31.664062 304.535156 31.078125 298.902344 31.078125 C 293.308594 31.078125 290.964844 31.480469 289.113281 32.878906 C 287.492188 34.050781 286.726562 36.261719 286.726562 39.824219 C 286.726562 43.972656 287.671875 46.136719 290.0625 47.308594 C 291.59375 48.03125 292.675781 48.214844 297.816406 48.527344 C 302.824219 48.84375 302.824219 48.84375 303.542969 49.113281 C 304.761719 49.519531 305.210938 50.46875 305.210938 52.453125 C 305.210938 54.527344 304.898438 55.699219 304.128906 56.238281 C 303.273438 56.917969 302.328125 57.050781 298.945312 57.050781 C 294.253906 57.050781 293.535156 56.917969 292.8125 55.699219 C 292.316406 54.933594 292.179688 54.164062 292.179688 51.910156 L 286.632812 51.910156 C 286.679688 54.300781 286.726562 55.203125 286.996094 56.511719 C 287.3125 58.089844 288.257812 59.53125 289.386719 60.207031 C 291.367188 61.382812 293.21875 61.695312 298.675781 61.695312 C 304.941406 61.695312 307.242188 61.199219 309.046875 59.441406 C 310.355469 58.132812 310.894531 56.105469 310.894531 52.359375 C 310.894531 48.527344 310.265625 46.769531 308.414062 45.507812 C 306.972656 44.46875 305.257812 44.152344 300.207031 43.839844 C 295.519531 43.566406 295.246094 43.566406 294.480469 43.34375 C 293.039062 42.890625 292.496094 41.898438 292.496094 39.734375 C 292.496094 36.308594 293.578125 35.632812 299.035156 35.632812 C 303.679688 35.632812 304.625 36.308594 304.625 39.597656 L 304.625 40.140625 Z M 327.308594 36.398438 L 336.195312 36.398438 L 336.195312 31.347656 L 312.832031 31.347656 L 312.832031 36.398438 L 321.535156 36.398438 L 321.535156 61.425781 L 327.308594 61.425781 Z M 351.347656 31.078125 C 348.640625 31.078125 346.160156 31.210938 344.988281 31.480469 C 342.507812 31.980469 340.523438 33.242188 339.394531 35 C 337.996094 37.210938 337.679688 39.417969 337.679688 47.175781 C 337.679688 50.917969 337.726562 52.359375 337.953125 53.757812 C 338.492188 57.097656 339.710938 59.035156 342.101562 60.34375 C 343.949219 61.335938 346.203125 61.695312 350.667969 61.695312 C 353.601562 61.695312 355.988281 61.5625 357.207031 61.289062 C 359.914062 60.75 361.898438 59.441406 362.980469 57.546875 C 364.242188 55.292969 364.511719 53.308594 364.511719 46.09375 C 364.511719 42.082031 364.421875 40.320312 364.195312 38.96875 C 363.609375 35.449219 362.078125 33.289062 359.371094 32.070312 C 357.613281 31.347656 355.628906 31.078125 351.347656 31.078125 M 343.542969 42.710938 C 343.589844 39.734375 343.992188 38.15625 344.988281 37.210938 C 345.933594 36.261719 347.152344 36.035156 350.804688 36.035156 C 354.1875 36.035156 355.3125 36.128906 356.304688 36.535156 C 357.433594 37.03125 358.15625 38.15625 358.425781 39.914062 C 358.652344 41.3125 358.652344 41.449219 358.652344 46.183594 C 358.652344 51.820312 358.605469 52.585938 358.066406 54.074219 C 357.296875 56.238281 356.078125 56.734375 351.660156 56.734375 C 347.0625 56.734375 345.707031 56.511719 344.851562 55.519531 C 343.769531 54.253906 343.542969 52.902344 343.542969 47.625 Z M 368.34375 61.425781 L 374.117188 61.425781 L 374.117188 51.414062 L 382.234375 51.414062 C 385.4375 51.324219 386.835938 52.722656 386.746094 56.015625 L 386.746094 61.425781 L 392.5625 61.425781 L 392.5625 54.886719 C 392.609375 51.234375 390.894531 49.203125 387.464844 49.023438 L 387.464844 48.800781 C 391.839844 47.941406 392.878906 46.320312 392.878906 40.320312 C 392.878906 33.601562 390.398438 31.347656 383.136719 31.347656 L 368.34375 31.347656 Z M 374.117188 46.5 L 374.117188 36.308594 L 382.597656 36.308594 C 386.292969 36.308594 387.015625 37.121094 387.015625 41.359375 C 387.015625 43.929688 386.789062 44.832031 385.84375 45.597656 C 385.164062 46.230469 383.992188 46.5 382.1875 46.5 Z M 402.84375 36.128906 L 417.632812 36.128906 L 417.632812 31.347656 L 397.070312 31.347656 L 397.070312 61.425781 L 417.769531 61.425781 L 417.769531 56.644531 L 402.84375 56.644531 L 402.84375 48.167969 L 416.867188 48.167969 L 416.867188 43.929688 L 402.84375 43.929688 Z M 402.84375 36.128906 "/><path fill="#FFFFFF" d="M 198.789062 31.347656 L 193.242188 48.394531 C 192.433594 50.871094 192.253906 51.503906 190.855469 56.554688 L 190.71875 56.554688 C 189.859375 53.398438 188.777344 49.65625 188.328125 48.394531 L 182.691406 31.347656 L 176.785156 31.347656 L 186.390625 61.425781 L 195.136719 61.425781 L 204.832031 31.347656 Z M 225.082031 55.652344 L 227.019531 61.425781 L 232.925781 61.425781 L 222.734375 31.347656 L 214.210938 31.347656 L 204.203125 61.425781 L 210.242188 61.425781 L 212.09375 55.652344 Z M 223.773438 51.367188 L 213.445312 51.367188 L 218.585938 35.765625 Z M 241.765625 31.347656 L 235.992188 31.347656 L 235.992188 61.425781 L 255.789062 61.425781 L 255.789062 56.375 L 241.765625 56.375 Z M 270.894531 31.078125 C 268.191406 31.078125 265.710938 31.210938 264.539062 31.480469 C 262.058594 31.980469 260.074219 33.242188 258.945312 35 C 257.546875 37.210938 257.230469 39.417969 257.230469 47.175781 C 257.230469 50.917969 257.277344 52.363281 257.503906 53.761719 C 258.042969 57.097656 259.261719 59.035156 261.652344 60.34375 C 263.5 61.335938 265.753906 61.695312 270.21875 61.695312 C 273.152344 61.695312 275.539062 61.5625 276.757812 61.289062 C 279.464844 60.75 281.449219 59.441406 282.53125 57.546875 C 283.792969 55.292969 284.0625 53.308594 284.0625 46.09375 C 284.0625 42.078125 283.972656 40.320312 283.75 38.96875 C 283.160156 35.453125 281.628906 33.285156 278.921875 32.070312 C 277.164062 31.347656 275.179688 31.078125 270.894531 31.078125 M 263.09375 42.710938 C 263.140625 39.734375 263.546875 38.15625 264.539062 37.210938 C 265.484375 36.261719 266.703125 36.039062 270.355469 36.039062 C 273.738281 36.039062 274.863281 36.128906 275.855469 36.535156 C 276.984375 37.03125 277.703125 38.15625 277.976562 39.914062 C 278.203125 41.3125 278.203125 41.449219 278.203125 46.183594 C 278.203125 51.820312 278.15625 52.585938 277.613281 54.074219 C 276.847656 56.238281 275.632812 56.734375 271.210938 56.734375 C 266.613281 56.734375 265.257812 56.511719 264.402344 55.519531 C 263.320312 54.257812 263.09375 52.902344 263.09375 47.625 Z M 263.09375 42.710938 "/></svg>
+  <small>Uppmätt i VALOLAB</small>
+</div></header>
+
+<main class="wrap">
+  <div class="intro">
+    <div>
+      <h1>Jämför extraljus</h1>
+      <p>Se hur långt och hur brett ljuset faktiskt når. Välj upp till fyra lampor. Alla ljusbilder är uppmätta i vårt eget ljuslabb VALOLAB.</p>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="picker" aria-label="Välj lampor">
+      <div class="picker-head">
+        <h2>Välj lampor</h2>
+        <input class="search" id="q" type="search" placeholder="Sök, t.ex. Panther S540" autocomplete="off" aria-label="Sök lampa">
+        <div class="fams" id="fams" role="group" aria-label="Filtrera på typ"></div>
+      </div>
+      <div class="list" id="list"></div>
+    </aside>
+
+    <section>
+      <div class="stage">
+        <div class="stage-head">
+          <div class="chips" id="chips"></div>
+          <div class="lux">
+            <label id="luxlbl">Ljus ner till</label>
+            <div class="seg" id="seg" role="group" aria-labelledby="luxlbl"></div>
+          </div>
+        </div>
+        <div class="luxnote" id="luxnote"></div>
+        <div class="canvas-box"><canvas id="cv" aria-label="Ljusbild sedd ovanifrån"></canvas></div>
+        <div class="readout" id="readout"></div>
+      </div>
+
+      <div class="results">
+        <div class="results-head">
+          <h2>Mätvärden</h2>
+          <p>Räckvidd och bredd där ljuset fortfarande är minst angiven luxnivå.</p>
+        </div>
+        <div class="tbl-wrap"><table id="tbl"></table></div>
+      </div>
+
+      <div class="foot">
+        <p>Ljusbilden visas ovanifrån med lampan till vänster. Bredden är förstorad jämfört med längden så att formen syns tydligt. Det grå bandet motsvarar en vanlig tvåfilig väg, cirka 7 meter bred.</p>
+        <p>Mätningarna är gjorda i VALOLAB och visar lampans ljus utan påverkan från väder, väglag eller montering.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const RAW = [[5482,0,514,62,"000000089ACJRZkrwz__-xsmfVOGA9980000000","Extraljus LAZER ST4 Evolution - Rak / 21 cm / 47W"],[5619,0,597,74,"000000089ACIQYipuy-__zvpiYQICA980000000","Extraljus LAZER ST6 Evolution - Rak / 28 cm / 66W"],[5622,0,370,44,"0000000899CJRZlswz__-xsldUNGA9980000000","Extraljus LAZER ST2 Evolution - Rak / 12 cm / 22W"],[5627,0,501,106,"0000000DKRXdjnsvxz-__zwtpkfZTNHC0000000","Extraljus LAZER Linear 6 Elite - Rak / 22 cm / 36W"],[5936,0,367,61,"00000008EJOWdiptwz__-xuqlfZTMHC70000000","Extraljus Osram MX140 - Rak / 14 cm / 30W"],[5941,0,413,41,"00000002358DLRZgnuz_-wphaSLE85420000000","Extraljus Osram SX180-SP - Rak / 18 cm / 14W"],[6076,0,833,71,"000000012247EMWeltz_ztkbTKD732210000000","Extraljus Strands Siberia SR 12\" - Rak / 30 cm / 32W"],[6187,0,1097,113,"000000059CFILPWcjt-_wmeYTNKHFC960000000","Extraljus Strands Siberia DR 12\" - Rak / 31 cm / 95W"],[6288,0,600,39,"0000000112358DNVfqy_zqcRJB7422210000000","Extraljus Purelux Black X-Slim S180 - Rak / 18 cm / 30W"],[6289,0,639,53,"000000023348EKTcmv__ztjaSKE953220000000","Extraljus Purelux Black X-Slim S250 - Rak / 25 cm / 45W"],[6349,0,863,79,"000000049ADHJLQVbkx_-nbTOLJHC9960000000","Extraljus LAZER Triple-R 750 Elite GEN2 - Rak / 23 cm / 45W"],[6406,0,511,34,"0000000223345DOVgr-_zncTMB5433220000000","LED Driving Light Hella Jumbo LED, 238 mm, Ref. 25, with parklight, 12/24V"],[6407,0,466,52,"000000099ADJQVdlsy-_ytnhbTNHCA990000000","LED Driving Light Hella 450 LED, 162 mm, 75 W, Ref. 12.5, with parklight"],[6726,0,836,80,"000000059CEHKOTZgqz_yoeXRLIFDB960000000","Extraljus STRANDS Siberia NG DR 12\" - Rak / 31 cm / 100W"],[8561,0,1071,112,"000000011249HQckrw-_-wrkcRH952110000000","Extraljus Purelux Panther S300 Gen1 - Rak / 30 cm / 108W (2022)"],[11683,0,674,99,"000000027DJRZfmquy-_-xtokcWOGA520000000","Extraljus Purelux Panther Aero S300 - Rak / 30 cm / 54W"],[11758,0,952,136,"000000025AGOXemquy-_-xtokcVNF9520000000","Extraljus Purelux Panther S300 Gen2 - Rak / 30 cm / 108W"],[11951,0,712,48,"0000000222346AJSfs-_yqeULC7432220000000","Extraljus PURELUX Black X-Slim S180 - Rak / 18 cm / 24W"],[11954,0,741,63,"00000002369DHMVdmu-_xsjbUNIEA6320000000","Extraljus PURELUX Black X-Slim S250 - Rak / 25 cm / 45W"],[12756,0,359,50,"0000000ADGJNTbjpuz___-xsnfXQKGDA0000000","Extraljus för Snöskoter PURELUX SM250 - 39W / 25 cm"],[12893,0,806,75,"000000059CEHJMRWdoz_zpfYSNJGDB850000000","Extraljus PURELUX Black Boost S200 - Rak / 20 cm / 60W"],[14636,0,1081,158,"000000026AGPXelquy-_-xuqleWOF9520000000","Extraljus PURELUX Panther S300 - Rak / 30 cm / 144W"],[5502,1,1013,217,"000000023ALbmtxyz-___--zxsmbL9220000000","Extraljus Purelux Road Curve - Kurvad / 56 cm / 120W"],[5575,1,968,223,"000000014DPfpvz--___--zywtoeOB210000000","Extraljus X-Vision Genesis 600 - Kurvad / 56 cm / 120W"],[5579,1,934,109,"00000001247FOVfnuy-_-yuphVMD64210000000","Extraljus W-Light Wave - Kurvad / 53 cm / 105W"],[5620,1,682,87,"000000089ACJQYiotx-_-yuqkaSKDA980000000","Extraljus LAZER ST8 Evolution - Rak / 36 cm / 88W"],[5623,1,809,114,"000000099BFMVemrvy-_-yuqldUMFB990000000","Extraljus LAZER ST12 Evolution - Rak / 52 cm / 144W"],[5628,1,661,149,"0000000ELSYejnsuxz-___zwtoidWQKD0000000","Extraljus LAZER Linear 12 Elite - Rak / 38 cm / 84W"],[5641,1,803,74,"000000069BBDHLTdnv-_ztkaRKGDBB960000000","LED-Driving Light Rigid E-Series 10” ref 30"],[5680,1,862,114,"00000001128ISblquy__-yuqkaQF51110000000","Extraljus X-Vision Genesis 300 - Kurvad / 32 cm / 60W"],[5857,1,705,114,"000000027DKTbhnrvy-_-yvsngaSKD610000000","Extraljus W-Light Storm 10 - Rak / 31cm / 72W"],[5858,1,814,138,"000000049GNWekquxz__-yvsoibTKD730000000","Extraljus W-Light Storm 20 - Rak / 48 cm / 120W"],[5958,1,676,144,"0000000CIPWdkptwy-___zxurmhbUOHB0000000","Extraljus LAZER Linear 12 Elite med Positionsljus - Rak / 38 cm / 84W"],[5959,1,810,176,"0000000CIPWdkptwy--__-zxupjdVPIC0000000","Extraljus LAZER Linear 18 Elite med Positionsljus - Rak / 53 cm / 126W"],[6003,1,282,150,"0000000cqsuwyz-_______--zyxvtqpT0000000","Arbetsbelysning Hella ValueFit LBX-380 - Rak / 38 cm / 44W"],[6073,1,966,105,"0000000268BGMTdkqwz_-xsldTMFB8520000000","Extraljus Strands Siberia SR 22\" - Rak / 56 cm / 59W"],[6077,1,884,177,"0000000CJPUYbehkpw-_ysnkheaXSNHA0000000","Extraljus Strands Siberia DR 22\" - Rak / 56 cm / 91W"],[6290,1,835,88,"0000000336AHOUbhov-_ytmgaSMF85320000000","Extraljus Purelux Black X-Slim S520 - Rak / 52 cm / 105W"],[6302,1,881,83,"000000023348GOZhovz_-vogXME743220000000","Extraljus LAZER Triple-R 850 GEN2 (med parkeringsljus) - Rak / 32 cm / 66W"],[6350,1,969,109,"00000006BBGLORUXcq-_zmdYUROKFBA60000000","Extraljus LAZER Triple-R 850 Elite GEN2 - Rak / 32 cm / 73W"],[6351,1,1130,107,"0000000699DHLOSWeqz_-uhXRMKHD9860000000","Extraljus LAZER Triple-R 1000 Elite GEN2 - Rak / 41 cm / 104W"],[6396,1,674,145,"0000000GGGGHKQbkrx__ztlcULHGFFGG0000000","Extraljus Osram MX250-CB - Rak / 36 cm / 45W"],[6613,1,1175,162,"0000000125AJTclqvy-_-yvrldVLC7210000000","Extraljus X-Vision Genesis II 600 Hybrid - Rak / 55 cm"],[6614,1,1094,159,"0000000126CLWfnswz-_-yvrmeWLC6210000000","Extraljus X-Vision Genesis II 600 Hybrid Heat - Rak / 55 cm"],[6615,1,1211,125,"000000011234AKamty-_-xrjZKB532110000000","Extraljus X-Vision Genesis II 600 Spot - Rak / 55 cm"],[6616,1,1208,111,"0000000112248GUgqw-_zvpfUG9421110000000","Extraljus X-Vision Genesis II 600 Spot Heat - Rak / 55 cm"],[6665,1,777,171,"0000000GNRVYacgjnt-_-unjfcaXUQLF0000000","Extraljus Strands Siberia DRC 22\" - Kurvad / 56 cm / 200W"],[6669,1,688,141,"0000000239JZlqtuwy-___-zxsiTG8320000000","Extraljus STRANDS Siberia SRC 22\" - Kurvad / 56 cm / 100W"],[6727,1,857,167,"0000000CJPTXbdgkov-_yrlifbYVRMG90000000","Extraljus STRANDS Siberia NG DR 22\" - Rak / 56 cm / 200W"],[6861,1,1093,144,"0000000237DLTbkqvz-_-yuqjaTLD7320000000","Extraljus Optibeam Savage 20\" - Rak / 55 cm / 101W"],[7057,1,1001,134,"0000000248EMUclqvy-_-yuqkbSKD8320000000","Extraljus W-Light Comber 550 - Kurvad / 54 cm / 150W"],[7114,1,1408,152,"000000012358GOcmuz__-ytmdPG853210000000","Extraljus Purelux Black Boost UNLIMITED S560 - Rak / 56 cm / 200W"],[7121,1,800,160,"0000000BIOTXacfhlsy_zuokhebXTOJC0000000","Extraljus Purelux Flash S560 - Rak / 56 cm / 200W"],[7472,1,2143,149,"0000000000235DNWisz_zqdTLC7320000000000","Extraljus STRANDS Siberia Outlaw 22\" - Rak / 56 cm / 400W"],[8562,1,1464,163,"00000001247ENVfmsx-_zwqkdTLD74210000000","Extraljus Purelux Panther S540 Gen1 - Rak / 54 cm / 216W (2022)"],[10307,1,1061,220,"0000000128IYlty-_____--zxslZK8110000000","Extraljus Purelux Road Curve C550 - Kurvad / 55 cm / 120W"],[10308,1,868,142,"000000036CJTbipuxz__-zwtpibSIB630000000","Extraljus Purelux Heat S530 - Rak / 53 cm / 150W"],[10309,1,1317,212,"00000004AGMTaglquy-_-xtpkfaSLF940000000","Extraljus PURELUX Major S530 V3 - Rak / 53 cm / 216 W"],[10313,1,1095,115,"00000002369EKRckrx-_-wqkcSKE85320000000","Extraljus Purelux Black X-Slim S520 UNLIMITED - Rak / 52 cm / 105W"],[11751,1,1046,207,"000000014BLZjquxy--___-yvqjXH7210000000","Extraljus Purelux Road Curve C530 Slim - Kurvad / 53 cm / 160W"],[12576,1,888,201,"000000039ISfpvyz-___--zywtoeSI930000000","Extraljus PURELUX Panther Aero C540 - Kurvad / 54 cm / 108W"],[12579,1,1500,212,"0000000159DLTbkpux-__zxtogXNFA620000000","Extraljus PURELUX Panther Heat S540 - Rak / 55 cm / 260W"],[12580,1,1215,263,"000000028HRdouxyz-____-ywrlbOF720000000","Extraljus PURELUX Panther C540 - Kurvad / 54 cm / 216W"],[12583,1,1292,209,"000000036CJTbiptwz-__zwtohaRIB620000000","Extraljus PURELUX Panther S540 White - Rak / 54 cm / 216W"],[12635,1,908,148,"000000037DKTcjqux-__-ywsohaSJC630000000","Extraljus PURELUX Panther Aero S540 - Rak / 54 cm / 108W"],[12643,1,1292,209,"000000036CJTbiptwz-__zwtohaRIB620000000","Extraljus PURELUX Panther S540 - Rak / 54 cm / 216W"],[12862,1,1308,160,"00000008CFILPUbipv-_-wqkdUPKHFC80000000","Extraljus PURELUX Black Boost S560 - Rak / 56 cm / 200W"],[12863,1,1116,107,"000000058BEHKPWdksy_-vogZRMHEB840000000","Extraljus PURELUX Black Boost S360 - Rak / 36 cm / 120W"],[12866,1,1077,193,"00000007ACHRdmtxz--___-yvofSIEB80000000","Extraljus PURELUX Black Boost C560 - Kurvad / 56 cm / 200W"],[12870,1,1094,101,"00000003369EHMWfov-_zvngXOIEB8530000000","Extraljus PURELUX Black X-Slim S520 - Rak / 52 cm / 105W"],[12875,1,841,140,"00000005AEIQcpx--____zzvqgUNJFB60000000","Extraljus PURELUX Black X-Slim C520 - Kurvad / 52 cm / 105W"],[14638,1,1144,150,"000000015AGNUbjpuy__-xtoiZSLFA510000000","Extraljus PURELUX Apex S500 - Rak / 53 cm / 120W"],[14641,1,1526,212,"0000000146BKVdmrvy-_-yvqlcTJA6410000000","Extraljus PURELUX Panther S540 EasyConnect XBB - Rak / 54 cm / 216W"],[5576,2,731,303,"0000000Dcouxz-_-zzyzz--_---zvocD0000000","Extraljus X-Vision Genesis 1100 - Kurvad / 105 cm / 240W"],[5577,2,691,354,"0000000aquvvwxz-_____--zyyzzxuqW0000000","Extraljus X-Vision Genesis 1300 - Kurvad / 130 cm / 300W"],[5679,2,1038,328,"00000004FWkuwxxxxyz--__-zyxtjTD20000000","Extraljus X-Vision Genesis 800 - Kurvad / 80 cm / 180W"],[5705,2,723,226,"0000000NVdkqvy--____---zywtoibUM0000000","Extraljus LAZER Linear 36 - Rak / 98 cm / 126W"],[5706,2,804,247,"0000000NVcioswyz-___--zzxvtoibUM0000000","Extraljus LAZER Linear 42 - Rak / 113 cm / 147W"],[5707,2,873,262,"0000000NUbhnruxyz-___-zxwtqmgaSK0000000","Extraljus LAZER Linear 48 - Rak / 128 cm / 168W"],[6074,2,985,161,"00000004CIOUZdjoty-_zvqlgbXTOIC50000000","Extraljus Strands Siberia SR 32\" - Rak / 82 cm / 95W"],[6075,2,1028,215,"00000009IPVaeinrvy__zvrnjfcZUPI90000000","Extraljus Strands Siberia SR 42\" - Rak / 107 cm / 130W"],[6078,2,865,234,"0000000GPXdiloqsuz__yusqpnlidXQH0000000","Extraljus Strands Siberia DR 32\" - Rak / 82 cm / 143W"],[6079,2,769,278,"0000000Qbjotwyz-_____---zxvsnhZO0000000","Extraljus Strands Siberia DR 50\" - Rak / 128 cm / 239W"],[6165,2,984,271,"0000000KSXcfijmorw-_zuqomkigcXSJ0000000","Extraljus Purelux Black Boost S1070 - Rak / 107 cm / 400W"],[6186,2,944,246,"0000000AMVcjnqtuwz-_-zxvspmibVMB0000000","Extraljus Strands Siberia SR 50\" - Rak / 127 cm / 155W"],[6188,2,847,293,"0000000OZgmrvxz--____--zyxvrmgXM0000000","Extraljus Strands Siberia DR 42\" - Rak / 107 cm / 196W"],[6308,2,1831,199,"0000000000CHMTdmrx_z-wrndSLGB0000000000","Extraljus LAZER Triple-R 24 Elite GEN2 - Rak / 112 cm / 312W"],[6309,2,1352,347,"00000006CGOkrxyxzxy_zyywxxriMGB50000000","Extraljus LAZER Triple-R 28 Elite GEN2 - Rak / 130 cm / 326W"],[6344,2,892,152,"00000008FKPVaejosx-_zvqlhdZUPKF80000000","Extraljus Strands Nuuk 30\" - Rak / 76 cm / 135W"],[6617,2,1270,212,"0000000138GRdlswz___-zwtpiaQF8310000000","Extraljus X-Vision Genesis II 800 Hybrid - Rak / 79 cm"],[6618,2,1277,187,"000000012348Ldrx-_-zxyxvpbL942110000000","Extraljus X-Vision Genesis II 800 Spot - Rak / 79 cm"],[6619,2,1410,288,"000000016EOblswyz-___-zxvpjYLC510000000","Extraljus X-Vision Genesis II 1100 Hybrid - Rak / 103 cm"],[6620,2,1273,255,"00000001237Lhty-____--z-zthN83210000000","Extraljus X-Vision Genesis II 1100 Spot - Rak / 103 cm"],[6621,2,1389,348,"00000004CMYkswz-_____--zyvriVJ930000000","Extraljus X-Vision Genesis II 1300 Hybrid - Rak / 126 cm"],[6622,2,1294,327,"0000000236Ijvyzyyz-___-zzyudG5220000000","Extraljus X-Vision Genesis II 1300 Spot - Rak / 126 cm"],[6666,2,1249,299,"0000000JOSUWafntxz__-zxtnfaWTROK0000000","Extraljus Strands Siberia DRC 32\" - Kurvad / 82 cm / 300W"],[6667,2,1273,368,"0000000PTVWZdlswxz-__-yuogaXVUSO0000000","Extraljus Strands Siberia DRC 42\" - Kurvad / 108 cm / 400W"],[6668,2,1235,470,"0000000Ybdehqx-_--zzz---ytkcZYXU0000000","Extraljus Strands Siberia DRC 50\" - Kurvad / 128 cm / 480W"],[6670,2,806,209,"0000000HQVYbeipuxz-__-zwtnjeaWQG0000000","Extraljus Strands Siberia SRC 32\" - Kurvad / 82 cm / 150W"],[6672,2,804,339,"0000000Zfiikptwxyzzz---__yunjhfa0000000","Extraljus Strands Siberia SRC 50\" - Kurvad / 127 cm / 240W"],[6723,2,927,240,"0000000LRVXabeimsx-_zwrmiebZXUQK0000000","Extraljus Purelux Black Boost C820 - Kurvad / 82 cm / 300 W"],[6724,2,874,300,"0000000SYcfhikmquz__ytomkjjhfdZT0000000","Extraljus Purelux Black Boost C1070 - Kurvad / 107 cm / 400W"],[6728,2,733,105,"00000004BGLQVahnty__zwqkfYUPLGB40000000","Extraljus STRANDS Siberia NG SR 32\" - Rak / 81 cm / 150W"],[6729,2,728,125,"00000005DKPUYbhnty__zwqlfZWTPKE50000000","Extraljus STRANDS Siberia NG SR 38\" - Rak / 96 cm / 180W"],[6863,2,1236,254,"000000038GPbmtxz-____-zywqjYNE730000000","Extraljus Optibeam Savage 40\" - Rak / 104 cm / 343 W"],[7473,2,2403,183,"000000000024AHQZkv__yriWND7320000000000","Extraljus STRANDS Siberia Outlaw 32\" - Rak / 82 cm / 600W"],[8563,2,1962,202,"00000000007DLTdkrw-_zvphZPIB60000000000","Extraljus Purelux Panther S1050 Gen1 - Rak / 103 cm / 432W (2022)"],[8564,2,1269,279,"0000000000Qfosvxyyz-___-ytmaJ0000000000","Extraljus Purelux Road Curve C790 - Kurvad / 79 cm / 180W"],[11685,2,1132,172,"0000000000JSahoswz__-xtpkdWOG0000000000","Extraljus Purelux Panther Aero S800 - Rak / 78 cm / 162W"],[11686,2,1307,204,"0000000000ISbiptx-__-yvqmfYQH0000000000","Extraljus Purelux Panther Aero S1050 - Rak / 103 cm / 216W"],[11753,2,1681,201,"0000000000DKSZhntx__zvqjdWPIB0000000000","Extraljus PURELUX Major S800 V2 - Rak / 77 cm / 320W"],[12577,2,929,299,"00000006IXlty-___--zzz----yujWH50000000","Extraljus PURELUX Panther Aero C800 - Kurvad / 78 cm / 162W"],[12578,2,936,422,"0000000Ngtxzzyyyzzzz--____-zxseL0000000","Extraljus PURELUX Panther Aero C1050 - Kurvad / 103 cm / 216W"],[12581,2,1258,413,"0000000AMZlvyz-______---zzxumZL90000000","Extraljus PURELUX Panther C800 - Kurvad / 79 cm / 324W"],[12582,2,1180,522,"0000000Kdrxz-_____--------zzyseJ0000000","Extraljus PURELUX Panther C1050 - Kurvad / 103 cm / 432W"],[12644,2,1435,270,"000000048FNXgntwy-___-ywtngYOG940000000","Extraljus PURELUX Panther S800 - Rak / 78 cm / 324W"],[12645,2,1498,331,"00000007EMVgotxz-____-zxvrlcSJB60000000","Extraljus PURELUX Panther S1050 - Rak / 103 cm / 432W"],[12854,2,1430,268,"000000037ELWfmsvxz-__-ywtohZPH940000000","Extraljus PURELUX Panther Flash S800 - Rak / 78 cm / 324W"],[12864,2,1344,242,"0000000CINQUXbintx-_zvpkfZVSPLHB0000000","Extraljus PURELUX Black Boost S820 - Rak / 82 cm / 300W"],[12865,2,1320,309,"0000000HOTWZcglquy__zwrnjebZVSNG0000000","Extraljus PURELUX Black Boost S1070 - Rak / 107 cm / 400 W"],[12867,2,1151,270,"0000000JNQRUZemrvy-__zxtohbWSQOJ0000000","Extraljus PURELUX Black Boost C820 - Kurvad / 82 cm / 300W"],[12872,2,1128,171,"00000004AGMSXagmsy__xsmhdZWRLF930000000","Extraljus PURELUX Black X-Slim S800 - Rak / 80 cm / 165W"],[12873,2,1112,214,"00000006DLSaehlpuz__zvqmjgdYRKC50000000","Extraljus PURELUX Black X-Slim S1000 - Rak / 100 cm / 210W"],[12876,2,1128,270,"0000000BLUbgjmquy-_-xtqnmkhdXPH80000000","Extraljus PURELUX Black X-Slim S1300 - Rak / 128 cm / 270W"],[12877,2,932,223,"0000000DMTXZbelrw-__zwrnidbZXTNF0000000","Extraljus PURELUX Black X-Slim C800 - Kurvad / 80 cm / 165W"],[12879,2,918,293,"0000000MXbdegltx-__-zyvspjgedbWM0000000","Extraljus PURELUX Black X-Slim C1010 - Kurvad / 101 cm / 210W"],[5249,3,769,52,"00000001133334DMbsz_yqgUKA4332210000000","Hella Luminator X LED (127 mm), Ref. 37,5, clear, 12/24V"],[5251,3,506,48,"000000033457CKTbktvy_voldND765430000000","Extraljus Halogen Hella Comet FF200 5\" - Runda / 14 cm"],[5287,3,597,54,"00000007789BEJSblty_-vndUIDA88770000000","Extraljus Seeker 100 - Rund / 12 cm / 35W"],[5732,3,193,124,"0000000pruwyz--______--zzyxvtsqn0000000","Dimljus Seeker 404, 90 mm, 12W"],[5743,3,406,53,"0000000236AIQZjptx-_-yuqkbSI95320000000","Extraljus W-Light Neptune I - Runda / 13 cm / 20W"],[7363,3,322,36,"00000005579DJUgov-__-yrkcQHC86550000000","Motorcykellampa Purelux SMAL15 - 6 cm / 15 W"],[12598,3,645,98,"0000000149GQZhotwz-_-yvsnfXOGA510000000","Arbetsbelysning PURELUX Panther Alpha 60 - 12 cm / 60W / Spot"],[5241,4,337,48,"000000057ADNXdimsy__-wqlhcULE9750000000","Extraljus 7\" HELLA Rallye 3003 Compact, halogen - Rund / 17 cm"],[5244,4,571,132,"0000000ANUZcdekpvz__-wslgcbZVOF70000000","Extraljus Hella Luminator Compact Xenon, separat elektronik 7\" - Runda / 17 cm"],[5245,4,557,137,"0000000ALUZbcchotx__-wsnhcbaYUM90000000","Extraljus Hella Luminator Compact Xenon, inbyggd elektronik 7\" - Runda / 17 cm"],[5248,4,403,26,"0000000011124568Rwyt_vN7643221110000000","Hella Comet 200 LED (144 mm), Ref. 12,5, clear, 12V"],[5250,4,638,49,"0000000146AEGHKScny__sfTJHGE96310000000","Hella Luminator Compact LED (181 mm), Ref. 45, clear, 12/24V"],[5252,4,437,66,"0000000579CMYfnuyzz-__zvofYLC9640000000","Extraljus Halogen Hella Comet FF500 6,5\" - Runda / 16 cm"],[5253,4,349,57,"00000009BCENWixz-wppw__yudRJDCB90000000","Extraljus Halogen Hella Comet FF550 - Fyrkantiga / 20 cm"],[5283,4,1087,74,"0000000444457CMVgr-_yncUNF9544440000000","Extraljus Purelux Road 748 - Runda / 18 cm / 48W"],[5284,4,775,63,"000000055569DKTclu-_zsjaSKE965550000000","Extraljus Purelux Road 745 - Runda / 18 cm / 45W"],[5794,4,1271,85,"0000000444569EMUeqy_ypeUME9754440000000","Extraljus Strands Hudson 7″ - Runda / 18 cm / 80W"],[6272,4,878,89,"00000001257CIQbjqx-_yuohbRKD85320000000","Extraljus Seeker Cyclops - Runda / 18 cm / 80W"],[6273,4,1233,68,"000000044557ACGMVly_zmXNHDA755440000000","Extraljus W-Light Booster 7 - Runda / 18 cm / 70W"],[6635,4,764,100,"0000000889BHRbkqvy__zwsniaSJC9880000000","Extraljus Strands Siberia Night Ranger 7\" - Rund / 18 cm / 80W"],[6637,4,730,93,"0000000889BHRajpuy-_-wrmgYRIC9880000000","Extraljus Strands Siberia Bush Ranger 7\" - Rund / 18 cm / 80W"],[6690,4,735,62,"0000000568BEHJScmuz_ztlcTLHEB9650000000","Extraljus Purelux Road 760 TIR - Runda / 18 cm / 60W"],[6957,4,753,94,"0000000567AITclrvy-_-xsmfTJA76550000000","Extraljus Purelux Road 780 HD V2 - Rund / 18 cm / 80W"],[6965,4,1272,99,"00000006778ADGOXjuz_yrfUMGDA87760000000","Extraljus Purelux 770 - Rund / 18 cm / 113W"],[10786,4,1416,86,"0000000556679CIPYkw_tgTKE97666550000000","Extraljus Shooter 7 - Rund / 18 cm / 110W"],[11712,4,975,114,"000000034559ITgouy-_-zuogTI955430000000","Extraljus PURELUX Heat 7200 - Rund / 18 cm / 135W"],[11752,4,975,114,"000000034559ITgouy-_-zuogTI955430000000","Extraljus PURELUX 7200 - Rund / 18 cm / 108W"],[12850,4,1295,124,"00000001259DJQZgovz_zuogZQJD85210000000","Extraljus PURELUX Panther 7 - Rund / 18 cm / 128W"],[12851,4,1295,124,"00000001259DJQZgovz_zuogZQJD85210000000","Extraljus PURELUX Panther 7 White - Rund / 18 cm / 128W"],[12855,4,944,128,"00000001237HScmswz-__zwrlbRH83110000000","Extraljus PURELUX Panther 5 - Rund / 15 cm / 90W"],[14648,4,1187,160,"00000007CGJOSWchmsx__ytnhaUPKGC80000000","Extraljus PURELUX Cobra 7 - Rund / 18 cm / 135W"],[5242,5,323,57,"000000044DJQbkvz_-yyyz-zwpfRIE840000000","Extraljus Halogen HELLA Rallye 3003 9\" - Runda / 22 cm"],[5243,5,294,50,"00000005BGOWZahmswx-_woidZXTLG840000000","Extraljus Halogen Hella Jumbo 320FF - Fyrkantiga / 25 cm"],[5246,5,594,104,"000000037GKSenz__zyyy--yvkeRIFA30000000","Extraljus Hella Luminator Xenon FF, separat elektronik 9\" - Runda / 22 cm"],[5247,5,642,108,"000000037EJSbjty-___--_zsicSKF730000000","Extraljus Hella Luminator Xenon FF, inbyggd elektronik 9\" - Runda / 22 cm"],[5254,5,675,61,"00000001227GIMORaqz_-pdSOLJG32210000000","Hella Luminator LED (222 mm), Ref. 40, clear, 12/24V"],[5738,5,1002,97,"00000003468DJQZiqw-_-wphYOHB86430000000","Extraljus Seeker 9 Spot - Runda / 22 cm / 120W"],[5770,5,528,122,"0000000DNRUbmqsvy-__-zwtrohXTQNB0000000","XENON Driving light, X-Vision DOMINATOR ANGEL GLOW, 35W, 12-24 V, ref. 25"],[5792,5,1086,101,"000000022235BKWgpw-_-vogWLD632220000000","Extraljus STRANDS Ambassador 9″ - Rund / 23 cm / 70W"],[5850,5,664,56,"000000023346AHSaiqy_ztkdVLD743320000000","LED Driving Light Hella Rallye 3003 LED (222 mm), Ref. 25, 12/24V"],[5851,5,602,55,"000000033457ENZhpy__-uldUJB654330000000","LED Driving Light Hella Luminator LED, (222 mm), Ref. 25, Black, 12/24V"],[5852,5,671,57,"000000023346AITbiry_ztkdVKC644320000000","LED Driving Light Hella Luminator LED, (222 mm), Ref. 25, Chrome, 12/24V"],[5853,5,1001,69,"0000000123359CISev___tgVMB6433220000000","LED Driving Light Hella Luminator LED, (222 mm), NON E-MARK, Black, 12/24V, FLOOD"],[6274,5,1723,96,"0000000445568BHNXnz_zmWMGB8655440000000","Extraljus W-Light Booster 9 - Runda / 23 cm / 130W"],[6275,5,1151,112,"00000007ACEFHKQWfrz_wlaSMIGFDCA70000000","Extraljus Seeker Quantum LED - Runda / 23 cm / 120W"],[6276,5,1065,89,"000000068ACDFHMRYjx_yjXRLHEDCA860000000","Extraljus Seeker Quantum Ledzer - Runda / 23 cm / 140W"],[6358,5,879,140,"0000000AACFMWgpuxz__-zxtqjcTJDAA0000000","Extraljus STRANDS Siberia Night Ranger 9\" - Rund / 23 cm / 170W"],[6636,5,931,134,"00000009ADJRYfmrwz__-yvrlcTKDBA90000000","Extraljus Strands Siberia Bush Ranger 9\" - Rund / 23 cm / 170W"],[6725,5,1577,107,"000000045568CGNUdpz_zpeVOHC965540000000","Extraljus STRANDS Siberia Night Ranger 9\" SPOT - Rund / 23 cm / 170W"],[6859,5,861,89,"0000000259EJNSagnuz_ysleYRNIE9520000000","Extraljus Optibeam Savage 9\" - Runda / 23 cm / 63W"],[6961,5,935,140,"0000000778BJVfqw-____-yvqfUJA7770000000","Extraljus Purelux Road 9170 HD V2 - Runda / 23 cm / 170W"],[6966,5,2026,108,"0000000000568AFLWly_xjVLFA7650000000000","Extraljus PURELUX 9110 - Rund / 23 cm / 175W"],[6993,5,1149,169,"00000007BGLRWafjoty__xrmhbWRLGB70000000","Extraljus Lazer Sentinel 9\" Elite - Rund / 23 cm / 145 W"],[7052,5,843,91,"00000002236DLRenty-_-wrkcRLD63220000000","Extraljus Purelux Q990 - Rektangulär / 25 cm / 90 W"],[7095,5,893,151,"00000008DJOUafmrvy-_-yvsngaUPJE80000000","Extraljus Strands Dark Knight Intense 9\" - Rund / 22 cm / 150W"],[7400,5,1173,117,"00000002259GKQYcfs-__vheaSMHA6220000000","Extraljus NBB Alpha 225 Xenon 24V Flood - Rund / 23 cm / 35W"],[7401,5,1309,71,"000000011222478GWix_-lXG864322110000000","Extraljus NBB Alpha 225 Xenon 24V Pencil - Rund / 23 cm / 35W"],[7725,5,1212,150,"0000000ADEEGIKMPZpz_whSNLJHFEEC90000000","Extraljus Purelux Black 9120 - Rund / 23 cm / 120W"],[8565,5,1102,133,"00000003457DLVhouy-_-yupiWLD75430000000","Extraljus PURELUX Heat 9200 - Rund / 22 cm / 200W"],[10787,5,1783,80,"0000000000668AFKRdv_xeQJEA8650000000000","Extraljus Shooter 9 - Rund / 23 cm / 160W"],[11715,5,1002,167,"0000000000IPZkuy-_____-yukZPI0000000000","Extraljus Purelux Bull 9 - Round / 23 cm / 240W"],[11757,5,1102,133,"00000003457DLVhouy-_-yupiWLD75430000000","Extraljus PURELUX 9200 - Rund / 22 cm / 200W"],[12574,5,1418,189,"000000025BHOUYdipvz_-xrlfZUOGA420000000","Extraljus PURELUX Panther 9 White - Rund / 23 cm / 210W"],[12575,5,1418,189,"000000025BHOUYdipvz_-xrlfZUOGA420000000","Extraljus PURELUX Panther 9 - Rund / 23 cm / 210W"],[12650,5,2032,110,"0000000000567AGMWkx_zmXLF96540000000000","Extraljus PURELUX 9110 DRL White - Rund / 23 cm / 175W"],[12651,5,2032,110,"0000000000567AGMWkx_zmXLF96540000000000","Extraljus PURELUX 9110 DRL - Rund / 23 cm / 175W"],[13480,5,1502,159,"0000000247AGMSagmty_-xrkdVOHC8520000000","Extraljus PURELUX Panther 11 - Rektangulär / 24 cm / 170W"],[13481,5,1502,159,"0000000247AGMSagmty_-xrkdVOHC8520000000","Extraljus PURELUX Panther 11 White - Rektangulär / 24 cm / 170W"],[13484,5,1681,122,"0000000368ADGILQYjw_-shXPIGDA8630000000","Extraljus PURELUX Ranger 9 - Rund / 23 cm / 160W"],[14642,5,1430,187,"000000024AHOUaiouz__ytmgcXTMF9420000000","Extraljus PURELUX Panther 9 Heat - Rund / 23 cm / 258W"],[14645,5,3256,133,"00001233333346BGOcw_rYMFA64333332100000","Extraljus PURELUX Panther 9 Long Range - Rund / 23 cm / 240W"],[14652,5,1452,205,"00000009DHKOSVbflrx_-unhcXTPLHEA0000000","Extraljus PURELUX Cobra 9 - Rund / 22 cm / 185W"],[5071,6,85,36,"0000000ajosvxyz---______-zyvsmeT0000000","Arbetsbelysning Purelux Terrain 12W, Bred"],[5311,6,248,54,"0000000BHMRbjptwy-__-zxvtpkfXQLE0000000","Arbetsbelysning Purelux Terrain 24W, Spot"],[5312,6,134,58,"0000000bglpuxz-_____--zyxvtqlhdX0000000","Arbetsbelysning Purelux Terrain 24W, Bred"],[5374,6,116,41,"0000000MYhouxyz--_____--zywtngXN0000000","Arbetsbelysning Nordic Scorpius N2401 24W, Bred"],[5375,6,218,34,"000000068BHRaiptxz__-xuqmfXOD9760000000","Arbetsbelysning Nordic Scorpius N2401 - 10 cm / 24W / Smal"],[5498,6,86,46,"0000000hnrvyz---________---zxupk0000000","Backljus / Arbetsbelysning Purelux Terrain 18W, Bred"],[5499,6,419,36,"0000000678ACGLUcluz_zvneUKFCA9870000000","Arbetsbelysning Purelux Terrain Spot - Rak / 16 cm / 18W"],[5815,6,106,35,"0000000QZhotxz-_____--zyxusojcUK0000000","Arbetsbelysning STRANDS Mini - 7 cm / 12W / Bred"],[5873,6,124,58,"0000000bnuxz-______-_----zzywslY0000000","Arbetsbelysning Nordic Pictor 620 - 16 cm / 28W / Bred"],[5874,6,63,48,"0000000xyz---___________----zyxw0000000","Arbetsbelysning Nordic Taurus N7201 - 23 cm / 30W / Bred"],[5875,6,117,35,"0000000LUcjptvyz-___--zyxvrmfZSJ0000000","Arbetsbelysning Nordic Scorpius Pro 415 PH - 10 cm / 28W / Bred"],[5876,6,114,47,"0000000Xgnrvwxzz-_____--zywvrngW0000000","LED-Worklight, Nordic Canis Pro 415 PH, 28W, 1500 lm, 5000K, Flood"],[5877,6,129,49,"0000000Vdlswz----____---zzyvrkdU0000000","Arbetsbelysning Nordic Canis GO 420 - 9 cm / 28W / Bred"],[5878,6,49,25,"0000000jquxz-________----zyxurmf0000000","Arbetsbelysning, Nordic KL1501, 10W, Bred"],[5879,6,103,42,"0000000Xflquxz--______---zxvqlfX0000000","Arbetslampa Nordic Canis N12 - 8 cm / 13W / Bred"],[5880,6,124,54,"0000000Uiqvz-___________--zxvqjV0000000","Arbetsbelysning Nordic Scorpius N26, 17W, Bred"],[6000,6,84,30,"0000000NZjqvxzz----_____-zxunfWM0000000","Arbetsbelysning Hella ValueFit S800, 800 lm, Bred"],[6001,6,116,42,"0000000Wbglquwyz-____--zxvtpjdYS0000000","Arbetsbelysning HELLA ValueFit S1500 - 10 cm / 1500 lm / Bred"],[6002,6,136,60,"0000000hmrvy-____-zyxwvusqnkfcYU0000000","Arbetsbelysning Hella ValueFit S2500, 2500 lm, Bred"],[6007,6,142,67,"0000000clpsuvwyz-____-zyxvusqokc0000000","Arbetsbelysning Strands Rock Solid Bred / 17W / ADR"],[6008,6,160,75,"0000000clprtuwxyz-___-zyxvusrold0000000","Arbetsbelysning Strands Rock Solid ADR - 11 cm / 29W / Bred"],[6012,6,128,60,"0000000dmqtuwxy--____--zywvtrpld0000000","Backljus Strands Rock Solid ADR - 11 cm / 17W / Bred"],[6234,6,93,27,"0000000PUYcglpuxy--__-zxuplgcYUP0000000","Arbetsbelysning Bullboy 10W, Bred"],[6240,6,79,51,"0000000psvwyzz---_______--zyxvso0000000","Backljus Bullboy 24W / Rund, Bred"],[6241,6,92,53,"0000000imqsvxyz----_____-zyxusok0000000","Backljus Bullboy 24W, Bred"],[6268,6,557,62,"000000047ADINUdknpx__zphcVPID9640000000","Arbetsbelysning Bullboy Agriline - Rund / 15 cm / 15W"],[6624,6,545,54,"00000001358EKRZgmuz_-wohaRKE85310000000","Arbetsbelysning PURELUX Terrain Black Square Spot - 7 cm / 20W / Spot"],[6625,6,124,45,"0000000Tbhmrwz__________-ywsnhbT0000000","Arbetsbelysning PURELUX Terrain Black Square Flood - 7 cm / 20W / Bred"],[6626,6,620,64,"00000002357BJRbjqw-_-xrjbQIB75320000000","Arbetsbelysning PURELUX Terrain Black Slim Spot - 16 cm / 30W / Spot"],[6627,6,128,52,"0000000Xekpvy-____________zvpkfY0000000","Arbetsbelysning PURELUX Terrain Black Slim Flood - 16 cm / 30W / Bred"],[6673,6,82,51,"0000000mpsuwxyz----_____--zyxvso0000000","LED-worklight Hella Valuefit TS 1700, 1700 lm, Wide"],[6675,6,141,85,"0000000otvxyzz_--____-----zywurm0000000","LED-worklight Hella LED PowerBeam 1800 C, Wide"],[6717,6,515,72,"0000000369EOWemrvy-_zwsojbULD8530000000","Arbetsbelysning STRANDS Siberia RV - Rak / 16 cm / 30W"],[6922,6,82,50,"0000000oruwyz--______--zzyxwuspl0000000","Arbetsbelysning Purelux Terrain Round 24W, Bred"],[7696,6,56,35,"0000000quwxyz--____--zzzyxxwvtrm0000000","Arbetsbelysning Purelux Rotatable 10, 10W / Bred"],[8260,6,177,132,"0000000uwxxyyz----_______---zyxw0000000","Dimljus PURELUX F210 - 6 cm / 10W"],[8548,6,92,63,"0000000uy-___----zzzzzzzzzz--ywr0000000","Arbetsbelysning Purelux Multi-Function - 13 cm / 24W / Flood"],[8560,6,77,42,"0000000kptvxyzz--______--zywvsoi0000000","Arbetsbelysning PURELUX Terrain Black Mini - 5 cm / 12W / Bred"],[10464,6,236,28,"0000000579GNSWbiqw-_xqidYTOKGB750000000","Arbetsbelysning Purelux Rotatable 10, 10W / Spot"],[12903,6,528,44,"0000000111238HTdmuz_-vlZNC5321110000000","Arbetsbelysning PURELUX Panther Alpha 20 - 10 cm / 20W / Spot"],[5038,7,125,61,"0000000flptwyz-______---zywurnke0000000","Arbetsbelysning Purelux Terrain 48W, Bred"],[5039,7,203,62,"0000000LTbjptwyz-_____-zywtpibTL0000000","Arbetsbelysning Purelux Terrain 48W, Spot"],[5371,7,194,74,"0000000NZkrvwyzzz---_____-zxskaO0000000","Arbetsbelysning Nordic Pictor LED N7301 32W, Bred"],[5372,7,294,112,"0000000Tckptwyz-______--zywtpkcT0000000","Arbetsbelysning Nordic Scorpius N4601 QD 85W, Bred"],[5384,7,148,91,"0000000pwy-_-xusrrrrstvwyz---_zk0000000","Fjärrstyrt Sökljus PURELUX RC360 - 24 cm / 80W / Bred"],[5385,7,795,74,"00000007778BHPajrx-_zumdULFA87770000000","Fjärrstyrt Sökljus PURELUX RC360 Spot - 24 cm / 80W / Spot"],[5730,7,217,113,"0000000imqtvxz--____--zzywuspnkf0000000","Arbetsbelysning Nordic Scorpius Pro 445 - 11 cm / 50W / Bred"],[5816,7,265,113,"0000000bhmruxz--_____-zyxwurnkfY0000000","Arbetsbelysning STRANDS Unity - 11 cm / 92W / Bred"],[5867,7,147,60,"0000000Wgouyz-______--__-zyxsmfX0000000","Arbetsbelysning Nordic Sato GO 625, 39W, Bred"],[5869,7,137,63,"0000000blsvxzz--________--zxvrka0000000","Arbetsbelysning Nordic KL1401, 42W, Bred"],[5870,7,205,120,"0000000luz-_______----_------zwo0000000","Arbetsbelysning Nordic Sato N3301, 50W, Bred"],[5871,7,413,83,"0000000AGLSaioux-____-zwsmhaSLF90000000","Arbetsbelysning Nordic Scorpius Pro 445 - 11 cm / 50W / Smal"],[5970,7,131,78,"0000000lrwyz--____________---yto0000000","LED-Worklight LAZER Utility-45 (2nd gen), wide bracket"],[6009,7,197,93,"0000000dmqtuwxy--____--zyxvurpld0000000","Arbetsbelysning Strands Rock Solid ADR - 11 cm / 38W / Bred"],[6011,7,444,60,"0000000ABDGMUckquy-__zvqkcTLFCB90000000","Arbetsbelysning STRANDS Rock Solid ADR - 11 cm / 38W / Spot"],[6248,7,67,51,"0000000xzz---____________---zzyx0000000","Arbetsbelysning Bullboy 40W, Bred"],[6258,7,1065,57,"00000001123457CLXmz_xjUH965432110000000","Fjärrstyrt sökljus Ocean Vision 50W"],[6259,7,599,45,"0000000444459GRbmw__xpfVNE7444440000000","Fjärrstyrt sökljus Ocean Vision 30W"],[6269,7,221,60,"0000000NRVZhouxz-____-zywtngYURN0000000","Arbetsbelysning Bullboy Agriline - Rak / 15 cm / 40W"],[6270,7,257,92,"0000000TXaeinrvxy-___-zywtpkfcZU0000000","Arbetsbelysning Bullboy Agriline - 16 cm / 80W / Bred"],[6346,7,91,51,"0000000inruwyz-______--zzxwwurni0000000","Arbetsbelysning STRANDS Unity - 7 cm / 31W / Bred"],[6347,7,129,79,"0000000mqtvxz--______---zyxwutrn0000000","Arbetsbelysning STRANDS Unity - 10 cm / 64W / Bred"],[6408,7,141,80,"0000000iloqtvxyz--____--zyxvspnk0000000","LED-worklight Hella Valuefit TS3000, 3000 lm, Wide, 300 cm cable"],[6519,7,200,67,"0000000SYdinruxyz-___--zxvsoidYS0000000","Arbetsbelysning Strands IZEBREAKER - 11 cm / 58W"],[6676,7,176,105,"0000000nruwyz---_______--zzywurm0000000","Arbetsbelysning Hella UltraBeam II, 4000 lm, Bred"],[6715,7,324,93,"0000000KSZfmrvxz-_____-zxurlfYSJ0000000","Arbetsbelysning Strands Siberia QB - 7 cm / 40W"],[6921,7,156,89,"0000000koruxyz---_______--zxurok0000000","Arbetsbelysning Purelux Terrain Square 54W, Bred"],[6923,7,155,89,"0000000lpsvyz-_____---zzzyxvtrpk0000000","Arbetsbelysning Purelux Terrain Round 54W, Bred"],[6924,7,190,114,"0000000mqtwxz--__________--zyvto0000000","Arbetsbelysning Purelux Terrain Square 96W, Bred"],[7047,7,142,68,"0000000fntwyz--_________--zyvrld0000000","Arbetsbelysning Purelux Square 40 HD, 40W / Bred"],[7049,7,146,79,"0000000krvyz--------______--yvqi0000000","Arbetsbelysning Purelux Square 60 HD, 60W / Bred"],[7050,7,185,101,"0000000kruxz-_________---zzywtpj0000000","Arbetsbelysning Purelux Square 90 HD, 90W / Bred"],[7053,7,184,71,"0000000Scjptvxyz--____--zxwtqkdT0000000","Arbetsbelysning Purelux Square 70, 70W / Bred"],[7054,7,540,68,"0000000236BIQXfmsx-_-ytniaUNE7420000000","Arbetsbelysning PURELUX Black Square 40 Spot - 8 cm / 40W / Spot"],[7055,7,166,72,"0000000Xhnruxz--________-zxvsoja0000000","Arbetsbelysning PURELUX Black Square 40 Flood - 8 cm / 40W / Bred"],[7479,7,174,105,"0000000nsuwxyz--_______--zyxwusn0000000","Arbetsbelysning Purelux Square 90, 90W / Wide"],[7694,7,120,67,"0000000ltx--______________--zxtl0000000","Arbetsbelysning Purelux Rotatable 40, 40W / Bred"],[7697,7,175,100,"0000000ntwyzz--_________---zywsl0000000","Arbetsbelysning Purelux Rotatable 90, 90W / Bred"],[7699,7,169,80,"0000000bkrvy--___________--zxuof0000000","Arbetsbelysning Purelux Rotatable 60, 60W / Bred"],[10454,7,355,65,"00000006AFMWekquxz-__-ywsngYPHA60000000","Arbetsbelysning Purelux Square 40 HD, 40W / Spot"],[10455,7,459,83,"000000069FNXflrvxz-__-yvsleVLD860000000","Arbetsbelysning Purelux Square 60 HD, 60W / Spot"],[10456,7,623,105,"000000057ELUckqux-___-yvrjcTKD750000000","Arbetsbelysning Purelux Square 90 HD, 90W / Spot"],[11762,7,330,61,"00000008DJPXekquxz-__zxurlgYRKE90000000","Arbetsbelysning Purelux Rotatable 40, 40W, Spot"],[11763,7,442,80,"00000008DJPXekrux-__-zwtqkeXPIA60000000","Arbetsbelysning Purelux Rotatable 60, 60W, Spot"],[11764,7,527,96,"00000007BHOWdjquxz___zxurlfXPHB70000000","Arbetsbelysning Purelux Rotatable 90, 90W, Spot"],[5370,8,599,231,"0000000Sdlquxy--_____---zywupkdS0000000","Arbetsbelysning Nordic Gemini LED N4701 - 41 cm / 300W / Bred"],[6253,8,186,124,"0000000txyz--_____________--zyws0000000","Arbetsbelysning BullPro Centum 100W, Bred"],[6256,8,253,134,"0000000inruwxzz--_____--zxwusplg0000000","Arbetsbelysning Bullboy 180W, Bred"],[6348,8,238,141,"0000000mruwxyz-_________-zyxvtql0000000","Arbetsbelysning STRANDS Unity - 14 cm / 149W - Bred"],[6956,8,267,142,"0000000iosuxz--_______---zywuroi0000000","Arbetsbelysning Purelux Terrain Square 180W, Bred"],[7048,8,220,134,"0000000ouxz--___________---zyxuo0000000","Arbetsbelysning Purelux Square 160 HD, 160W / Bred"],[7051,8,249,115,"0000000dlrvyz--_______---zywuqkc0000000","Arbetsbelysning Purelux Square 120 HD, 120W / Bred"],[10457,8,734,127,"000000057DKUckrvy-___-ywsleVLD750000000","Arbetsbelysning Purelux Square 120 HD, 120W / Spot"],[10458,8,736,133,"00000007CIOWekquxz__-zxuqkeXPJC70000000","Arbetsbelysning Purelux Square 160 HD, 160W / Spot"],[5488,9,666,66,"0000000889ABEJRajtz_yqgWNGDA98880000000","Arbetsbelysning Purelux Terrain Straight - Rak / 36 cm / 72W"],[6716,9,589,174,"0000000EQZhosvyz--_____-ywtohZPE0000000","Arbetsbelysning Strands Siberia Red Tiger - Rak / 30 cm / 100W"],[5489,10,791,79,"0000000889ACGNajrw-_zvpgXLFB99880000000","Arbetsbelysning Purelux Terrain Straight - Rak / 54 cm / 120W"],[5493,10,557,63,"00000009AABEIQclty__-xrjaPHDBAA90000000","Arbetsbelysning Purelux Terrain Curve - Kurvad / 36 cm / 72W"],[5494,10,583,117,"0000000BCEHTitz___-_----ythQGDCB0000000","Arbetsbelysning Purelux Terrain Curve - Kurvad / 57 cm / 120W"],[7056,10,227,93,"0000000Ygmrvy-___________-yvqlfY0000000","Arbetsbelysning PURELUX Terrain Black 520 - Rak / 52 cm / 105 W"],[8517,10,277,114,"0000000Ygmqvy-___________-xuplfY0000000","Arbetsbelysning PURELUX Terrain Straight 120W - Rak / 36 cm"],[8518,10,377,148,"0000000Xdjnsvxz--_____--zywtojeX0000000","Arbetsbelysning PURELUX Terrain Straight 200W - Rak / 56 cm"],[8522,10,289,113,"0000000Xejotwyz-______--zywtojdW0000000","Arbetsbelysning PURELUX Terrain Curve 120W - Kurvad / 36 cm"],[8523,10,359,152,"0000000Zgmquwyzz--____--zywuqmhZ0000000","Arbetsbelysning PURELUX Terrain Curve 200W - Kurvad / 56 cm"],[5490,11,882,108,"00000009ABCGNXkrw-__-yuphUKECBA90000000","Arbetsbelysning Purelux Terrain Straight - Rak / 79 cm / 180W"],[5491,11,915,158,"0000000ABCGPepwz-___-zywsjWKECBA0000000","Arbetsbelysning Purelux Terrain Straight - Rak / 104 cm / 240W"],[5492,11,899,183,"0000000CDFJWlty-____-yyywsiTHEDC0000000","Arbetsbelysning Purelux Terrain Straight - Rak / 130 cm / 300W"],[5495,11,618,167,"0000000EGKWqy---zzz-___--zujSJFE0000000","Arbetsbelysning Purelux Terrain Curve - Kurvad / 82 cm / 180W"],[5496,11,630,253,"0000000IPiwz-_--zyy--___---zvjPH0000000","Arbetsbelysning Purelux Terrain Curve - Kurvad / 107 cm / 240W"],[5497,11,614,304,"0000000Ogy-___--------zzzzyz-xjO0000000","Arbetsbelysning Purelux Terrain Curve - Kurvad / 127 cm / 300W"],[5971,11,413,150,"0000000Ubhnswyyz--____-zywurmhbU0000000","Arbetsbelysning LAZER Linear-24 FLOOD - 68 cm / 168W / Bred"],[8519,11,663,178,"0000000NRUYcfjnquy-_-vrnkhebXURM0000000","Arbetsbelysning PURELUX Terrain Straight 300W - Rak / 81 cm"],[8520,11,876,206,"0000000KPSVYcglqv-__ytokhdaXTQNJ0000000","Arbetsbelysning PURELUX Terrain Straight 400W - Rak / 107 cm"],[8521,11,994,230,"0000000JNRTWZchlqvz__yuplgbXUROJ0000000","Arbetsbelysning PURELUX Terrain Straight 500W - Rak / 132 cm"],[8524,11,644,190,"0000000PTXZcfimpty-_-xsokhebZXUP0000000","Arbetsbelysning PURELUX Terrain Curve 300W - Kurvad / 81 cm"],[8525,11,816,232,"0000000ORTVYbejnsx-_-wrmidaYVTRO0000000","Arbetsbelysning PURELUX Terrain Curve 400W - Kurvad / 107 cm"],[8526,11,817,267,"0000000RUWYbfjotwz_-xtokgdaZXVUR0000000","Arbetsbelysning PURELUX Terrain Curve 480W - Kurvad / 127 cm"],[7000,32,206,40,"00000008CJQakrwz-____-zxtngWMEA70000000","Cykellampa för elcykel LIGHT5 EB1000 - 1000 lm / Bosch"],[7002,32,206,40,"00000008CJQakrwz-____-zxtngWMEA70000000","Cykellampa för elcykel LIGHT5 EB1000 - 1000 ml / Yamaha"],[7003,32,285,54,"000000079EMXhouxz-___-zwtngYQKD80000000","Cykellampa för elcykel LIGHT5 EB2000 - 2000 lm / Bosch"],[7004,32,285,54,"000000079EMXhouxz-___-zwtngYQKD80000000","Cykellampa för elcykel LIGHT5 EB2000 - 2000 lm / Brose"],[7005,32,206,40,"00000008CJQakrwz-____-zxtngWMEA70000000","Cykellampa för elcykel LIGHT5 EB1000 - 1000 lm / Brose"],[7006,32,285,54,"000000079EMXhouxz-___-zwtngYQKD80000000","Cykellampa för elcykel LIGHT5 EB2000 - 2000 lm / Yamaha"],[7007,32,206,40,"00000008CJQakrwz-____-zxtngWMEA70000000","Cykellampa för elcykel LIGHT5 EB1000 - 1000 lm / till Shimano"],[7008,32,285,54,"000000079EMXhouxz-___-zwtngYQKD80000000","Cykellampa för elcykel LIGHT5 EB2000 - 2000 lm / till Shimano"],[7387,32,206,40,"00000008CJQakrwz-____-zxtngWMEA70000000","Cykellampa för elcykel LIGHT5 EB1000 - 1000 lm / Bafang"]];
+const AL = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
+const HALF = [0,1,2,3,4,5,6.5,8,10,12.5,15,18,22,27,33,40,50,62,75,88];
+const ANGS = [...HALF.slice(1).reverse().map(a=>-a), ...HALF];
+const LUX = [0.25,1,2.5,10];
+const LUXTXT = {
+  0.25:'<b>0,25 lux</b> ungefär som fullmånens ljus. Räcker för att ana föremål långt fram.',
+  1:'<b>1 lux</b> är ett vanligt mått på räckvidd. Vägkanter och vilt syns tydligt.',
+  2.5:'<b>2,5 lux</b> ger ett väl upplyst område där detaljer syns.',
+  10:'<b>10 lux</b> motsvarar ungefär en upplyst gata. Starkt, användbart arbetsljus.'
+};
+const COLORS = ['#FFCE00','#FFFFFF','#E58A13','#1EA612'];
+const FAM = [
+  {k:'all',t:'Alla'},
+  {k:'ramp',t:'Ljusramper',g:[0,1,2]},
+  {k:'rund',t:'Runda',g:[3,4,5]},
+  {k:'arb',t:'Arbetsbelysning',g:[6,7,8]},
+  {k:'arbramp',t:'Arbetsljusramper',g:[9,10,11]},
+  {k:'cykel',t:'Elcykel',g:[32]}
+];
+const GROUP = {
+  0:'Extraljusramper, upp till 30 cm',1:'Extraljusramper, 31-65 cm',2:'Extraljusramper, från 66 cm',
+  3:'Runda extraljus, upp till 13 cm',4:'Runda extraljus, 14-20 cm',5:'Runda extraljus, från 20 cm',
+  6:'Arbetsbelysning, upp till 30 W',7:'Arbetsbelysning, 31-99 W',8:'Arbetsbelysning, från 100 W',
+  9:'Arbetsljusramper, upp till 30 cm',10:'Arbetsljusramper, 31-65 cm',11:'Arbetsljusramper, från 66 cm',
+  32:'Elcykellampor'
+};
+const ORDER = [0,1,2,3,4,5,6,7,8,9,10,11,32];
+
+function splitName(n){
+  let s = n.replace(/^(Extraljus|Arbetsbelysning,?|Arbetslampa)\s+/i,'');
+  const i = s.indexOf(' - ');
+  if(i>0) return {title:s.slice(0,i).trim(), spec:s.slice(i+3).trim()};
+  return {title:s.trim(), spec:''};
+}
+const LAMPS = RAW.map(([id,g,R,W,code,name])=>{
+  const m = R; // fallback, real scale from max radius below
+  const rel = [...code].map(c=>AL.indexOf(c)/63);
+  const nm = splitName(name);
+  return {id,g,R,W,rel,name,title:nm.title,spec:nm.spec,search:name.toLowerCase()};
+});
+// Max radius ≈ range on axis; rel is relative to max radius. Derive absolute scale so that max forward reach equals R.
+LAMPS.forEach(l=>{
+  let fmax=0; l.rel.forEach((v,i)=>{fmax=Math.max(fmax,v*Math.cos(ANGS[i]*Math.PI/180));});
+  l.scale = fmax>0 ? l.R/fmax : l.R;
+  l.rad = l.rel.map(v=>v*l.scale);
+});
+const BYID = new Map(LAMPS.map(l=>[l.id,l]));
+
+const state = {sel:[12643,6077,6350], lux:1, fam:'all', q:'', allLevels:false};
+try{
+  const h = new URLSearchParams(location.hash.slice(1));
+  const ids = (h.get('l')||'').split(',').map(Number).filter(x=>BYID.has(x)).slice(0,4);
+  if(ids.length) state.sel = ids;
+  const lx = parseFloat(h.get('lux')); if(LUX.includes(lx)) state.lux = lx;
+}catch(e){}
+
+const fmt = n => Math.round(n).toLocaleString('sv-SE');
+const luxStr = l => String(l).replace('.',',');
+const k = l => Math.sqrt(0.25/l);
+const colorOf = id => COLORS[state.sel.indexOf(id)];
+
+/* ---------- Picker ---------- */
+const famEl = document.getElementById('fams');
+FAM.forEach(f=>{
+  const b=document.createElement('button');b.className='fam';b.textContent=f.t;b.dataset.k=f.k;
+  b.setAttribute('aria-pressed',f.k===state.fam);
+  b.onclick=()=>{state.fam=f.k;famEl.querySelectorAll('.fam').forEach(x=>x.setAttribute('aria-pressed',x.dataset.k===f.k));renderList();};
+  famEl.appendChild(b);
+});
+document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value.trim().toLowerCase();renderList();});
+
+function renderList(){
+  const list=document.getElementById('list');
+  const fam=FAM.find(f=>f.k===state.fam);
+  const terms=state.q.split(/\s+/).filter(Boolean);
+  const full=state.sel.length>=4;
+  let html='';let count=0;
+  ORDER.forEach(g=>{
+    if(fam.g && !fam.g.includes(g)) return;
+    const items=LAMPS.filter(l=>l.g===g && terms.every(t=>l.search.includes(t))).sort((a,b)=>b.R-a.R);
+    if(!items.length) return;
+    html+=`<div class="group-title">${GROUP[g]}</div>`;
+    items.forEach(l=>{
+      count++;
+      const on=state.sel.includes(l.id);
+      const c=on?colorOf(l.id):'';
+      html+=`<button class="item${on?' on':''}" data-id="${l.id}" ${(!on&&full)?'disabled':''} style="--c:${c}" aria-pressed="${on}">
+        <div><div class="nm">${esc(l.title)}</div>${l.spec?`<div class="sp">${esc(l.spec)}</div>`:''}</div>
+        <div class="rng">${fmt(l.R*k(state.lux))} m<small>vid ${luxStr(state.lux)} lx</small></div></button>`;
+    });
+  });
+  if(!count) html=`<div class="empty">Ingen lampa matchar ”${esc(state.q)}”. Prova ett kortare sökord eller välj Alla.</div>`;
+  else if(full) html=`<div class="empty" style="padding:10px 16px;border-bottom:1px solid var(--line)">Du jämför fyra lampor. Ta bort en för att lägga till en ny.</div>`+html;
+  list.innerHTML=html;
+  list.querySelectorAll('.item').forEach(b=>b.onclick=()=>toggle(+b.dataset.id));
+}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function toggle(id){
+  const i=state.sel.indexOf(id);
+  if(i>=0){state.sel.splice(i,1);}
+  else if(state.sel.length<4){state.sel.push(id);grow[id]=0;}
+  update();
+}
+
+/* ---------- Lux control ---------- */
+const seg=document.getElementById('seg');
+LUX.forEach(l=>{
+  const b=document.createElement('button');b.textContent=luxStr(l)+' lx';b.dataset.l=l;
+  b.onclick=()=>{state.lux=l;update();};
+  seg.appendChild(b);
+});
+
+/* ---------- Chips ---------- */
+function renderChips(){
+  const el=document.getElementById('chips');
+  if(!state.sel.length){el.innerHTML='<span class="hint">Välj en lampa i listan för att se ljusbilden.</span>';return;}
+  el.innerHTML=state.sel.map(id=>{const l=BYID.get(id);return `<span class="chip" style="--c:${colorOf(id)}"><i></i><span title="${esc(l.name)}">${esc(l.title)}</span><button aria-label="Ta bort ${esc(l.title)}" data-id="${id}">×</button></span>`}).join('');
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>toggle(+b.dataset.id));
+}
+
+/* ---------- Table ---------- */
+function renderTable(){
+  const t=document.getElementById('tbl');
+  if(!state.sel.length){t.innerHTML='<tr><td style="padding:22px 18px;color:var(--muted)">Välj lampor för att jämföra mätvärden.</td></tr>';return;}
+  const ls=state.sel.map(id=>BYID.get(id));
+  const kk=k(state.lux);
+  const maxR=Math.max(...ls.map(l=>l.R));
+  const maxW=Math.max(...ls.map(l=>l.W));
+  const bestR=ls.length>1?ls.reduce((a,b)=>b.R>a.R?b:a):null;
+  const bestW=ls.length>1?ls.reduce((a,b)=>b.W>a.W?b:a):null;
+  let h=`<thead><tr><th>Lampa</th><th>Räckvidd vid ${luxStr(state.lux)} lx</th><th>Bredd vid ${luxStr(state.lux)} lx</th>`+
+    LUX.map(l=>`<th>${luxStr(l)} lx</th>`).join('')+`<th></th></tr></thead><tbody>`;
+  ls.forEach(l=>{
+    h+=`<tr><td class="lamp"><div class="nm" style="--c:${colorOf(l.id)}"><i></i>${esc(l.title)}</div>${l.spec?`<div class="sp">${esc(l.spec)}</div>`:''}</td>
+      <td class="main">${fmt(l.R*kk)} m${bestR===l?'<span class="best">Längst</span>':''}<span class="bar"><b style="width:${l.R/maxR*100}%"></b></span></td>
+      <td class="main">${fmt(l.W*kk)} m${bestW===l?'<span class="best">Bredast</span>':''}<span class="bar"><b style="width:${l.W/maxW*100}%"></b></span></td>`+
+      LUX.map(x=>`<td class="${x===state.lux?'sel':''}">${fmt(l.R*k(x))} m</td>`).join('')+
+      `<td><a class="go" href="https://www.valostore.se/sv/p/${l.id}" target="_blank" rel="noopener">Till produkten</a></td></tr>`;
+  });
+  h+='</tbody>';
+  t.innerHTML=h;
+}
+
+/* ---------- Canvas ---------- */
+const cv=document.getElementById('cv');const ctx=cv.getContext('2d');
+let W=0,H=0,DPR=1,geo=null,hover=null;
+const grow={};
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function niceStep(span,target){
+  const raw=span/target;const p=Math.pow(10,Math.floor(Math.log10(raw)));
+  for(const m of [1,2,2.5,5,10]) if(m*p>=raw) return m*p;
+  return 10*p;
+}
+function resize(){
+  const r=cv.getBoundingClientRect();DPR=Math.min(window.devicePixelRatio||1,2);
+  W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);draw();
+}
+function shapePts(l,f){
+  // returns [[forward, lateral]] polygon for scale factor f (lux factor * grow)
+  const pts=[[0,0]];
+  l.rad.forEach((r,i)=>{const a=ANGS[i]*Math.PI/180;pts.push([r*f*Math.cos(a), r*f*Math.sin(a)]);});
+  pts.push([0,0]);return pts;
+}
+function draw(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H);
+  const padL=W<500?44:58, padR=18, padT=18, padB=34;
+  const ls=state.sel.map(id=>BYID.get(id));
+  const kk=k(state.lux);
+  // extents
+  let maxF=100,maxS=10;
+  ls.forEach(l=>{shapePts(l,kk).forEach(([f,s])=>{maxF=Math.max(maxF,f);maxS=Math.max(maxS,Math.abs(s));});});
+  maxF*=1.06; maxS*=1.18;
+  const sx=(W-padL-padR)/maxF, sy=(H-padT-padB)/2/maxS;
+  const ox=padL, oy=padT+(H-padT-padB)/2;
+  geo={ox,oy,sx,sy,maxF,maxS,padL,padR,padT,padB};
+  const X=f=>ox+f*sx, Y=s=>oy-s*sy;
+
+  // road band (7 m)
+  ctx.fillStyle='rgba(255,255,255,0.045)';
+  ctx.fillRect(ox,Y(3.5),W-padR-ox,Math.max(1,7*sy));
+  ctx.strokeStyle='rgba(255,255,255,0.10)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ox,Y(3.5));ctx.lineTo(W-padR,Y(3.5));ctx.moveTo(ox,Y(-3.5));ctx.lineTo(W-padR,Y(-3.5));ctx.stroke();
+  ctx.setLineDash([10,14]);ctx.strokeStyle='rgba(255,206,0,0.22)';
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(W-padR,oy);ctx.stroke();ctx.setLineDash([]);
+
+  // grid
+  ctx.font='12px Inter, system-ui, sans-serif';ctx.fillStyle='#8C8C8C';
+  const stepF=niceStep(maxF,W<500?4:7), stepS=niceStep(maxS,3);
+  ctx.strokeStyle='rgba(255,255,255,0.07)';
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let f=stepF;f<maxF;f+=stepF){ctx.beginPath();ctx.moveTo(X(f),padT);ctx.lineTo(X(f),H-padB);ctx.stroke();ctx.fillText(fmt(f)+' m',X(f),H-padB+9);}
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let s=stepS;s<maxS;s+=stepS){
+    [s,-s].forEach(v=>{ctx.beginPath();ctx.moveTo(ox,Y(v));ctx.lineTo(W-padR,Y(v));ctx.stroke();});
+    ctx.fillText(fmt(s)+' m',ox-8,Y(s));ctx.fillText(fmt(s)+' m',ox-8,Y(-s));
+  }
+  ctx.fillText('0',ox-8,oy);
+
+  // beams
+  ctx.save();ctx.beginPath();ctx.rect(ox,padT-4,W-padR-ox,H-padT-padB+8);ctx.clip();
+  ctx.globalCompositeOperation='lighter';
+  ls.forEach((l,i)=>{
+    const c=COLORS[i];const g=grow[l.id]??1;const e=1-Math.pow(1-g,3);
+    if(state.allLevels){
+      LUX.filter(x=>x!==state.lux).forEach(x=>{
+        const p=shapePts(l,k(x)*e);ctx.beginPath();p.forEach(([f,s],j)=>j?ctx.lineTo(X(f),Y(s)):ctx.moveTo(X(f),Y(s)));
+        ctx.setLineDash([3,4]);ctx.strokeStyle=hexA(c,0.45);ctx.lineWidth=1;ctx.stroke();ctx.setLineDash([]);
+      });
+    }
+    const p=shapePts(l,kk*e);
+    ctx.beginPath();p.forEach(([f,s],j)=>j?ctx.lineTo(X(f),Y(s)):ctx.moveTo(X(f),Y(s)));ctx.closePath();
+    const reach=Math.max(...p.map(q=>q[0]));
+    const grad=ctx.createLinearGradient(ox,0,X(Math.max(reach,1)),0);
+    grad.addColorStop(0,hexA(c,0.42));grad.addColorStop(0.55,hexA(c,0.20));grad.addColorStop(1,hexA(c,0.07));
+    ctx.fillStyle=grad;ctx.fill();
+    ctx.strokeStyle=hexA(c,0.95);ctx.lineWidth=1.6;ctx.stroke();
+  });
+  ctx.restore();
+
+  // lamp origin
+  ctx.fillStyle='#FFCE00';ctx.beginPath();ctx.arc(ox,oy,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,206,0,0.25)';ctx.beginPath();ctx.arc(ox,oy,9,0,Math.PI*2);ctx.fill();
+
+  // hover crosshair
+  if(hover && ls.length){
+    const hx=X(hover.f), hy=Y(hover.s);
+    ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(hx,padT);ctx.lineTo(hx,H-padB);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(hx,hy,3.5,0,Math.PI*2);ctx.fill();
+  }
+}
+function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+
+function luxAt(l,f,s){
+  const r=Math.hypot(f,s); if(r<0.5) return Infinity;
+  const a=Math.atan2(s,f)*180/Math.PI;
+  if(a<ANGS[0]||a>ANGS[ANGS.length-1]) return 0;
+  let i=0; while(i<ANGS.length-2 && ANGS[i+1]<a) i++;
+  const t=(a-ANGS[i])/(ANGS[i+1]-ANGS[i]);
+  const R=l.rad[i]*(1-t)+l.rad[i+1]*t;
+  return 0.25*(R/r)*(R/r);
+}
+function luxFmt(v){
+  if(v===Infinity||v>=100) return 'över 100 lx';
+  if(v<0.05) return 'under 0,05 lx';
+  return (v>=10?Math.round(v):v>=1?v.toFixed(1):v.toFixed(2)).toString().replace('.',',')+' lx';
+}
+function renderReadout(){
+  const el=document.getElementById('readout');
+  const ls=state.sel.map(id=>BYID.get(id));
+  const opt=`<label class="opts"><input type="checkbox" id="all" ${state.allLevels?'checked':''}> Visa alla luxnivåer</label>`;
+  if(!ls.length){el.innerHTML=opt;bindOpt();return;}
+  if(!hover){el.innerHTML=`<span>${matchMedia('(pointer:coarse)').matches?'Tryck':'Peka'} i ljusbilden för att se hur starkt ljuset är på just den platsen.</span><span style="flex:1"></span>${opt}`;bindOpt();return;}
+  const side=Math.abs(hover.s)<0.5?'mitt fram':`${fmt(Math.abs(hover.s))} m åt ${hover.s>0?'vänster':'höger'}`;
+  el.innerHTML=`<span class="pos">${fmt(hover.f)} m fram, ${side}</span>`+
+    ls.map((l,i)=>`<span class="v" style="--c:${COLORS[i]}"><i></i>${luxFmt(luxAt(l,hover.f,hover.s))}</span>`).join('')+`<span style="flex:1"></span>${opt}`;
+  bindOpt();
+}
+function bindOpt(){const c=document.getElementById('all');if(c)c.onchange=()=>{state.allLevels=c.checked;draw();};}
+
+function pointer(e){
+  if(!geo) return;
+  const r=cv.getBoundingClientRect();
+  const x=e.clientX-r.left, y=e.clientY-r.top;
+  if(x<geo.ox||x>W-geo.padR||y<geo.padT||y>H-geo.padB){if(hover){hover=null;draw();renderReadout();}return;}
+  hover={f:(x-geo.ox)/geo.sx, s:(geo.oy-y)/geo.sy};
+  draw();renderReadout();
+}
+cv.addEventListener('pointermove',pointer);
+cv.addEventListener('pointerdown',pointer);
+cv.addEventListener('pointerleave',()=>{hover=null;draw();renderReadout();});
+
+let anim=null;
+function animate(){
+  const pending=Object.keys(grow).filter(id=>grow[id]<1);
+  if(!pending.length){anim=null;return;}
+  pending.forEach(id=>{grow[id]=reduce?1:Math.min(1,grow[id]+1/36);});
+  draw();anim=requestAnimationFrame(animate);
+}
+
+function update(){
+  seg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.l===state.lux));
+  document.getElementById('luxnote').innerHTML=LUXTXT[state.lux];
+  renderChips();renderList();renderTable();renderReadout();draw();
+  if(!anim) anim=requestAnimationFrame(animate);
+  try{history.replaceState(null,'','#l='+state.sel.join(',')+'&lux='+state.lux);}catch(e){}
+}
+state.sel.forEach(id=>grow[id]=0);
+new ResizeObserver(resize).observe(cv);
+update();
+</script>
+</body>
+</html>
